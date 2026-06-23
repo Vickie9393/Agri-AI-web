@@ -1,0 +1,360 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Disease AI — AgriAI{% endblock %}
+{% block nav_disease %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/features.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+<style>
+  #imagePreview, #diseaseImage, #csvFileInput, #analyzeLoading, #resultContent, #datasetPreview, #trainingLogSection, #tab-train, #tab-history, #top3Section { display: none; }
+  #imagePreview.show, #analyzeLoading.show, #resultContent.show, #datasetPreview.show, #trainingLogSection.show { display: block; }
+  #tab-train.show, #tab-history.show { display: block; }
+  #top3Section.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <div class="page-header">
+    <div>
+      <h1>🔬 Crop Disease Recognition</h1>
+      <p>Upload a photo for instant AI diagnosis — or train your own model with a CSV dataset</p>
+    </div>
+    <div class="header-badges">
+      {% if model_trained %}
+        <span class="badge badge-green">✅ ML Model Active</span>
+      {% else %}
+        <span class="badge badge-amber">⚡ Rule-Based Mode</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB NAVIGATION
+  ══════════════════════════════════════ -->
+  <div class="disease-tabs animate-in" data-delay="0">
+    <button class="dtab active" onclick="switchDTab('analyze', this)">🔍 Analyze Image</button>
+    <button class="dtab"        onclick="switchDTab('train',   this)">🧠 Train ML Model</button>
+    <button class="dtab"        onclick="switchDTab('history', this)">📋 Scan History</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 1: ANALYZE IMAGE
+  ══════════════════════════════════════ -->
+  <div id="tab-analyze" class="dtab-content active">
+    <div class="upload-analysis-grid">
+
+      <!-- Upload Card -->
+      <div class="card upload-card animate-in" data-delay="1">
+        <h3>📸 Upload Crop Image</h3>
+
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('diseaseImage').click()">
+          <div class="upload-anim" id="uploadAnim">
+            <div class="upload-icon-wrap">
+              <span class="upload-icon">📷</span>
+              <div class="upload-rings"><div></div><div></div></div>
+            </div>
+            <p>Click or drag & drop crop image</p>
+            <small>JPG • PNG • WebP • Max 10MB</small>
+          </div>
+          <img id="imagePreview" src="" alt="" class="hidden-img">
+        </div>
+        <input type="file" id="diseaseImage" accept="image/jpeg,image/png,image/webp" onchange="previewImage(this)" class="hidden-input">
+
+        <div class="form-group mt-1">
+          <label>Crop Type</label>
+          <select id="cropNameSelect" class="select-field" title="Select crop type">
+            <option value="unknown">Select crop (optional)</option>
+            <option value="wheat">🌾 Wheat</option>
+            <option value="rice">🌾 Rice / Paddy</option>
+            <option value="maize">🌽 Maize / Corn</option>
+            <option value="tomato">🍅 Tomato</option>
+            <option value="potato">🥔 Potato</option>
+            <option value="cotton">🪴 Cotton</option>
+            <option value="sugarcane">🎋 Sugarcane</option>
+            <option value="soybean">🌿 Soybean</option>
+            <option value="groundnut">🥜 Groundnut</option>
+            <option value="onion">🧅 Onion</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <button class="btn-primary full" onclick="analyzeDisease()" id="analyzeBtn">
+          <i class="fa fa-search"></i> Analyze Disease
+        </button>
+        <div id="analyzeMsg" class="msg-box"></div>
+      </div>
+
+      <!-- Result Card -->
+      <div class="card result-card animate-in" data-delay="2" id="resultCard">
+
+        <!-- Placeholder -->
+        <div id="resultPlaceholder">
+          <div class="placeholder-icon">🌿</div>
+          <p class="text-muted text-center mb-1-5">
+            Upload a crop image to get AI disease analysis
+          </p>
+          <div class="tip-box">
+            <div class="tip-item">✅ Use clear, well-lit photos</div>
+            <div class="tip-item">✅ Focus on the affected leaf/stem</div>
+            <div class="tip-item">✅ Capture both healthy and diseased parts</div>
+            <div class="tip-item">✅ Avoid blurry or dark images</div>
+            <div class="tip-item">🧠 Train your own model with the CSV tab above!</div>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="analyzeLoading" class="hidden-div">
+          <div class="scan-wrap">
+            <div class="scan-border">
+              <div class="scan-line"></div>
+              <div class="scan-center">🔬</div>
+            </div>
+            <p class="scan-label" id="scanLabel">AI is analyzing your crop...</p>
+            <div class="scan-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Content -->
+        <div id="resultContent" class="hidden-div">
+          <div class="disease-result-header">
+            <div class="disease-icon-lg" id="diseaseIconLg">🦠</div>
+            <div class="disease-info">
+              <h2 id="diseaseName">Disease Name</h2>
+              <div class="model-tag" id="modelTag">rule-based</div>
+            </div>
+            <div class="severity-pill" id="severityPill">—</div>
+          </div>
+
+          <div class="confidence-section">
+            <div class="conf-label">
+              <span>AI Confidence</span>
+              <span id="confPct">0%</span>
+            </div>
+            <div class="conf-track">
+              <div class="conf-fill w-0" id="confFill"></div>
+            </div>
+          </div>
+
+          <!-- Top 3 Predictions -->
+          <div class="top3-section hidden-div" id="top3Section">
+            <h4>📊 Top Predictions</h4>
+            <div id="top3List"></div>
+          </div>
+
+          <!-- Treatment Box -->
+          <div class="treatment-card">
+            <h4>💊 Treatment Recommendation</h4>
+            <p id="treatmentText"></p>
+          </div>
+
+          <div class="result-actions">
+            <button class="btn-sm-outline" onclick="location.reload()"><i class="fa fa-redo"></i> New Scan</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 2: TRAIN ML MODEL
+  ══════════════════════════════════════ -->
+  <div id="tab-train" class="dtab-content hidden-section">
+    <div class="train-grid">
+
+      <!-- Upload Dataset Card -->
+      <div class="card animate-in" data-delay="1">
+        <h3>📁 Upload Training Dataset (CSV)</h3>
+
+        <div class="csv-info-box">
+          <h4>📋 Required CSV Format</h4>
+          <p>Your CSV must have a <code>label</code> column with disease names, plus either:</p>
+          <div class="csv-format-tabs">
+            <div class="csv-fmt-option">
+              <strong>Option A — Pre-computed Features</strong>
+              <code>label, r_mean, g_mean, b_mean, r_std, g_std, b_std, hue_mean, sat_mean, val_mean, dx, dy, gray_mean, gray_std, r_ratio, g_ratio, b_ratio</code>
+            </div>
+            <div class="csv-fmt-option">
+              <strong>Option B — Image Paths</strong>
+              <code>label, image_path</code>
+              <small>Features auto-extracted from each image</small>
+            </div>
+            <div class="csv-fmt-option">
+              <strong>Option C — Labels Only (Demo)</strong>
+              <code>label</code>
+              <small>Works for testing. Use Options A/B for real accuracy.</small>
+            </div>
+          </div>
+          <div class="csv-example">
+            <strong>Example rows:</strong><br>
+            <code>label,r_mean,g_mean,b_mean,r_std,...</code><br>
+            <code>Yellow Rust,180,140,90,25,...</code><br>
+            <code>Healthy,80,160,70,12,...</code>
+          </div>
+        </div>
+
+        <!-- CSV Drop Zone -->
+        <div class="csv-drop-zone" id="csvDropZone" onclick="document.getElementById('csvFileInput').click()">
+          <span class="csv-icon">📊</span>
+          <p id="csvDropText">Click to upload CSV dataset</p>
+          <small>Max 50MB • Must have "label" column</small>
+        </div>
+        <input type="file" id="csvFileInput" accept=".csv" onchange="handleCsvSelect(this)" class="hidden-input">
+
+        <div class="form-group mt-1 mb-0-6">
+          <label>Dataset Name</label>
+          <input type="text" id="datasetName" placeholder="e.g. Wheat Disease Dataset 2025" class="field-input">
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <textarea id="datasetDesc" rows="2" placeholder="Source, crop types covered..." class="field-input"></textarea>
+        </div>
+
+        <button class="btn-primary full" onclick="uploadDataset()" id="uploadDatasetBtn">
+          <i class="fa fa-upload"></i> Upload Dataset
+        </button>
+        <div id="uploadMsg" class="msg-box"></div>
+        
+        <div class="divider" style="text-align: center; margin: 15px 0; color: #aaa; position: relative;">
+          <span style="background: white; padding: 0 10px; position: relative; z-index: 1;">OR</span>
+          <div style="position: absolute; top: 50%; width: 100%; height: 1px; background: #ddd; left: 0; z-index: 0;"></div>
+        </div>
+        
+        <button class="btn-primary full" onclick="autoSetupDataset()" id="autoSetupBtn" style="background-color: #0d9488; border-color: #0f766e;">
+          <i class="fa fa-magic"></i> Auto Setup Demo Dataset & Train
+        </button>
+        <div id="autoSetupMsg" class="msg-box"></div>
+
+        <!-- Dataset Preview -->
+        <div id="datasetPreview" class="dataset-preview-box hidden-div mt-1">
+          <h4>📊 Dataset Summary</h4>
+          <div id="datasetStats"></div>
+        </div>
+      </div>
+
+      <!-- Train & Status Card -->
+      <div class="card animate-in" data-delay="2">
+        <h3>🧠 Train ML Model</h3>
+
+        <!-- Current Model Status -->
+        <div class="model-status-box" id="modelStatusBox">
+          {% if model_trained %}
+          <div class="status-indicator trained">
+            <span class="status-dot"></span>
+            <div>
+              <strong>✅ Trained Model Active</strong>
+              <small>AI is using your custom trained model for disease detection</small>
+            </div>
+          </div>
+          {% else %}
+          <div class="status-indicator untrained">
+            <span class="status-dot"></span>
+            <div>
+              <strong>⚡ No Trained Model</strong>
+              <small>Using rule-based color analysis. Upload CSV to train ML model!</small>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Datasets List -->
+        <div id="datasetsListSection">
+          <h4 class="mb-1-5">Your Uploaded Datasets</h4>
+          {% if datasets %}
+            <div class="datasets-list" id="datasetsList">
+              {% for ds in datasets %}
+              <div class="dataset-item" id="ds-{{ ds.id }}">
+                <div class="ds-info">
+                  <strong>{{ ds.name }}</strong>
+                  <small>{{ ds.total_rows }} rows • {{ ds.unique_labels }} classes • {{ ds.uploaded_at|date:"d M Y" }}</small>
+                  {% if ds.label_names %}
+                  <div class="ds-labels">
+                    {% for lbl in ds.label_names|slice:":5" %}<span class="lbl-chip">{{ lbl }}</span>{% endfor %}
+                    {% if ds.label_names|length > 5 %}<span class="lbl-chip more">+{{ ds.label_names|length|add:"-5" }} more</span>{% endif %}
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="ds-right">
+                  <div class="ds-status status-{{ ds.status }}">{{ ds.status|title }}</div>
+                  {% if ds.accuracy %}<div class="ds-accuracy">{{ ds.accuracy }}% acc.</div>{% endif %}
+                  {% if ds.status != 'training' %}
+                  <button class="btn-sm-outline train-btn" onclick="trainModel({{ ds.id }}, this)">
+                    <i class="fa fa-brain"></i> Train
+                  </button>
+                  {% else %}
+                  <button class="btn-sm-outline" disabled><i class="fa fa-spinner fa-spin"></i> Training...</button>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <span>📊</span>
+              <p>No datasets uploaded yet. Upload a CSV file on the left!</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Training Log -->
+        <div id="trainingLogSection" class="hidden-div mb-1-5">
+          <h4>📝 Training Log</h4>
+          <div class="training-progress">
+            <div class="train-progress-bar">
+              <div class="train-progress-fill" id="trainProgressFill"></div>
+            </div>
+            <span id="trainProgressLabel">0%</span>
+          </div>
+          <pre class="training-log-box" id="trainingLog">Waiting to start...</pre>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 3: HISTORY
+  ══════════════════════════════════════ -->
+  <div id="tab-history" class="dtab-content hidden-section">
+    <div class="card animate-in" data-delay="1">
+      <h3>📋 Disease Scan History</h3>
+      {% if records %}
+      <div class="history-grid">
+        {% for rec in records %}
+        <div class="history-card">
+          <div class="history-img-wrap">
+            <img src="{{ rec.image.url }}" alt="{{ rec.crop_name }}" class="history-img">
+            <div class="history-overlay">
+              <span class="h-conf">{{ rec.confidence_score|default:0 }}%</span>
+            </div>
+          </div>
+          <div class="history-body">
+            <strong>{{ rec.crop_name|title }}</strong>
+            <span class="h-disease">{{ rec.detected_disease|default:"Pending" }}</span>
+            <div class="h-meta">
+              <span class="sev-dot sev-{{ rec.severity|lower }}">{{ rec.severity|default:"—" }}</span>
+              <span class="h-model">{{ rec.model_used|default:"rule" }}</span>
+              <span class="h-date">{{ rec.created_at|date:"d M Y" }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <span>🔬</span>
+        <p>No scans yet. Upload your first crop image in the Analyze tab!</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/disease.js' %}"></script>
+{% endblock %}

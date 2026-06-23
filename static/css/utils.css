@@ -1,0 +1,110 @@
+/* ═══════════════════════════════════════
+   AgriAI — Utility CSS Classes
+   Removes inline styles and uses CSS classes
+═══════════════════════════════════════ */
+
+/* Animation Delay Variables */
+.animate-in { 
+  animation: fadeSlideIn 0.6s ease-out forwards;
+}
+
+.animate-in[data-delay] { 
+  opacity: 0;
+}
+
+.animate-in[data-delay="0"] { animation-delay: 0s; }
+.animate-in[data-delay="1"] { animation-delay: 0.15s; }
+.animate-in[data-delay="2"] { animation-delay: 0.3s; }
+.animate-in[data-delay="3"] { animation-delay: 0.45s; }
+.animate-in[data-delay="4"] { animation-delay: 0.6s; }
+.animate-in[data-delay="5"] { animation-delay: 0.75s; }
+.animate-in[data-delay="6"] { animation-delay: 0.9s; }
+.animate-in[data-delay="7"] { animation-delay: 1.05s; }
+.animate-in[data-delay="8"] { animation-delay: 1.2s; }
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Display Utilities */
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+.hidden-section {
+  display: none;
+}
+
+.hidden-section.show {
+  display: block;
+}
+
+.hidden-img {
+  display: none;
+  max-width: 100%;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+.hidden-img.show {
+  display: block;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.hidden-div {
+  display: none;
+}
+
+.hidden-div.show {
+  display: block;
+}
+
+/* Margin Utilities */
+.mb-1-5 { margin-bottom: 1.5rem; }
+.mt-1 { margin-top: 1rem; }
+.mt-0-5 { margin-top: 0.5rem; }
+.mb-0-6 { margin-bottom: 0.6rem; }
+
+/* Padding Utilities */
+.p-2 { padding: 2rem; }
+.p-2-1-5 { padding: 0 1.5rem 1rem; }
+.py-1-5 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+/* Font Utilities */
+.font-3rem { font-size: 3rem; }
+.font-0-88rem { font-size: 0.88rem; }
+
+
+/* Width Utilities */
+.w-0 { width: 0%; }
+.w-100 { width: 100%; }
+
+/* Color Utilities */
+.text-green-mid { color: var(--green-mid); }
+.text-green-pale { color: var(--green-pale); }
+.text-green-deep { color: var(--green-deep); }
+.text-inherit { color: inherit; }
+.text-muted { color: var(--text-muted); }
+.text-center { text-align: center; }
+
+/* Styling Utilities */
+.cursor-pointer { cursor: pointer; }
+.underline { text-decoration: underline; }
+.link-inherit { color: inherit; text-decoration: underline; }
+
+/* Border Radius */
+.rounded-lg { border-radius: 12px; }
+
+/* Width Utilities */
+.full { width: 100%; }
+.max-w-100 { max-width: 100%; }
+

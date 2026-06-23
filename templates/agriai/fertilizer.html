@@ -1,0 +1,102 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Fertilizer Calculator — AgriAI{% endblock %}
+{% block nav_fertilizer %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/features.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+<style>
+  #fertResults { display: none; }
+  #fertResults.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div><h1>💊 Fertilizer Calculator</h1><p>Get precise NPK requirements with cost estimate and application schedule</p></div>
+  </div>
+
+  <div class="calc-grid">
+    <div class="card calc-input-card animate-in" data-delay="1">
+      <h3>🌱 Enter Crop Details</h3>
+      <div class="form-group"><label>Crop Type *</label>
+        <select id="fcCrop" title="Select crop type">
+          <option value="">Select crop</option>
+          <option value="wheat">🌾 Wheat</option><option value="rice">🌾 Rice / Paddy</option>
+          <option value="maize">🌽 Maize</option><option value="tomato">🍅 Tomato</option>
+          <option value="potato">🥔 Potato</option><option value="cotton">🪴 Cotton</option>
+          <option value="sugarcane">🎋 Sugarcane</option><option value="soybean">🌿 Soybean</option>
+          <option value="groundnut">🥜 Groundnut</option><option value="onion">🧅 Onion</option>
+          <option value="mustard">🌼 Mustard</option><option value="sunflower">🌻 Sunflower</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Field Area (acres) *</label><input type="number" id="fcArea" placeholder="e.g. 2.5" step="0.1" min="0.1"></div>
+      <div class="form-group"><label>Soil Type</label>
+        <select id="fcSoil" title="Select soil type">
+          <option value="loamy">Loamy (best)</option><option value="sandy">Sandy</option>
+          <option value="clay">Clay</option><option value="black">Black Cotton</option>
+          <option value="red">Red Soil</option><option value="silty">Silty</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Crop Growth Stage</label>
+        <select id="fcStage" title="Select crop growth stage">
+          <option value="seedling">🌱 Seedling (0–3 weeks)</option>
+          <option value="vegetative" selected>🌿 Vegetative (3–8 weeks)</option>
+          <option value="flowering">🌸 Flowering</option>
+          <option value="fruiting">🍎 Fruiting / Grain Fill</option>
+        </select>
+      </div>
+      <button class="btn-primary full" onclick="calculateFertilizer()">Calculate Fertilizer 🧮</button>
+      <div id="fertMsg" class="msg-box"></div>
+      <div class="npk-legend">
+        <div class="npk-item n"><strong>N</strong>Nitrogen</div>
+        <div class="npk-item p"><strong>P</strong>Phosphorus</div>
+        <div class="npk-item k"><strong>K</strong>Potassium</div>
+      </div>
+    </div>
+
+    <div class="card animate-in" data-delay="2">
+      <div id="fertPlaceholder" class="text-center text-muted p-2">
+        <div class="mb-1-5 font-3rem">💊</div>
+        <p>Fill in crop details and click Calculate to get your fertilizer plan</p>
+      </div>
+      <div id="fertResults" class="hidden-div">
+        <h3>📊 Your Fertilizer Plan</h3>
+        <div class="npk-bars">
+          <div class="npk-bar-item"><div class="npk-label"><span class="npk-dot n"></span>Nitrogen (N)</div><div class="npk-bar-track"><div class="npk-bar-fill n" id="nBar"></div></div><span id="nVal" class="npk-value">—</span></div>
+          <div class="npk-bar-item"><div class="npk-label"><span class="npk-dot p"></span>Phosphorus (P)</div><div class="npk-bar-track"><div class="npk-bar-fill p" id="pBar"></div></div><span id="pVal" class="npk-value">—</span></div>
+          <div class="npk-bar-item"><div class="npk-label"><span class="npk-dot k"></span>Potassium (K)</div><div class="npk-bar-track"><div class="npk-bar-fill k" id="kBar"></div></div><span id="kVal" class="npk-value">—</span></div>
+        </div>
+        <h4 class="text-green-deep mb-0-6 font-0-88rem">🛬 Buy These Fertilizers</h4>
+        <div class="bag-grid">
+          <div class="bag-item"><span class="bag-icon">🧪</span><strong>Urea</strong><span id="ureaQty">—</span><small>46% N</small></div>
+          <div class="bag-item"><span class="bag-icon">🧪</span><strong>DAP</strong><span id="dapQty">—</span><small>18-46-0</small></div>
+          <div class="bag-item"><span class="bag-icon">🧪</span><strong>MOP</strong><span id="mopQty">—</span><small>60% K₂O</small></div>
+        </div>
+        <div class="cost-box"><i class="fa fa-rupee-sign"></i><div><strong>Estimated Cost</strong><span id="costVal">₹0</span></div></div>
+        <div class="schedule-box"><h4>📅 Application Schedule</h4><p id="scheduleText"></p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card animate-in" data-delay="3">
+    <h3>📋 Calculation History</h3>
+    {% if logs %}
+    <div class="fert-history">
+      {% for l in logs %}
+      <div class="fert-log-item">
+        <div class="fli-crop">🌾 {{ l.crop_name|title }}</div>
+        <div class="fli-details">{{ l.field_area }} acres · {{ l.soil_type }} · {{ l.crop_stage }}</div>
+        <div class="fli-npk">N:{{ l.nitrogen_kg }}kg P:{{ l.phosphorus_kg }}kg K:{{ l.potassium_kg }}kg</div>
+        <div class="fli-cost">₹{{ l.estimated_cost|floatformat:0 }}</div>
+        <div class="fli-date">{{ l.created_at|date:"d M Y" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><span>💊</span><p>No calculations yet. Run your first above!</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/fertilizer.js' %}"></script>{% endblock %}

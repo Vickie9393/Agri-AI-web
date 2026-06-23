@@ -1,0 +1,112 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Crop Planner — AgriAI{% endblock %}
+{% block nav_crop %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/features.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+<style>
+  .progress-fill { width: 40%; }
+  .modal-header button { color: inherit; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div><h1>🌾 Crop Planner</h1><p>Plan and track your crops through the entire growing season</p></div>
+    <button class="btn-primary" onclick="openModal('addCropModal')"><i class="fa fa-plus"></i> Add New Crop</button>
+  </div>
+
+  <div class="filter-tabs animate-in" data-delay="0">
+    <button class="filter-btn active" onclick="filterCrops('all',this)">All Crops</button>
+    <button class="filter-btn" onclick="filterCrops('kharif',this)">🌧️ Kharif</button>
+    <button class="filter-btn" onclick="filterCrops('rabi',this)">❄️ Rabi</button>
+    <button class="filter-btn" onclick="filterCrops('zaid',this)">☀️ Zaid</button>
+    <button class="filter-btn" onclick="filterCrops('perennial',this)">🌳 Perennial</button>
+  </div>
+
+  <div class="crop-grid" id="cropGrid">
+    {% if crops %}{% for c in crops %}
+    <div class="crop-card animate-in season-{{ c.season }}" data-delay="{{ forloop.counter }}">
+      <div class="crop-header">
+        <div class="crop-icon">🌾</div>
+        <div class="crop-title"><h3>{{ c.crop_name|title }}</h3><small>{{ c.variety|default:"—" }}</small></div>
+        <div class="crop-status status-{{ c.status }}">{{ c.status|title }}</div>
+      </div>
+      <div class="crop-details">
+        <div class="crop-detail"><i class="fa fa-calendar"></i> Sown: {{ c.sowing_date|date:"d M Y" }}</div>
+        <div class="crop-detail"><i class="fa fa-calendar-check"></i> Harvest: {{ c.expected_harvest|date:"d M Y" }}</div>
+        <div class="crop-detail"><i class="fa fa-expand-arrows-alt"></i> {{ c.field_area }} acres</div>
+        <div class="crop-detail"><i class="fa fa-tint"></i> {{ c.irrigation_method|default:"Not set" }}</div>
+        <div class="crop-detail"><i class="fa fa-leaf"></i> {{ c.soil_type|default:"Not set" }}</div>
+      </div>
+      <div class="crop-progress">
+        <div class="progress-label">Growth Progress</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>
+      <div class="crop-actions">
+        <button class="btn-sm-outline delete-crop-btn" data-crop-id="{{ c.id }}" title="Delete crop"><i class="fa fa-trash"></i> Delete</button>
+      </div>
+    </div>
+    {% endfor %}{% else %}
+    <div class="empty-full animate-in" data-delay="1">
+      <div class="empty-icon">🌱</div>
+      <h3>No crops planned yet</h3>
+      <p>Start planning your first crop season</p>
+      <button class="btn-primary" onclick="openModal('addCropModal')">Add Your First Crop</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="modal-overlay" id="addCropModal">
+    <div class="modal-card">
+      <div class="modal-header"><h3>🌾 Add New Crop Plan</h3><button onclick="closeModal('addCropModal')" title="Close dialog"><i class="fa fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>Crop Name *</label><input type="text" id="cpCropName" placeholder="e.g. Wheat, Rice, Tomato"></div>
+          <div class="form-group"><label>Variety</label><input type="text" id="cpVariety" placeholder="e.g. HD-2967, BT Cotton"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Season *</label>
+            <select id="cpSeason" title="Select crop season">
+              <option value="kharif">Kharif (Jun–Oct)</option>
+              <option value="rabi">Rabi (Oct–Mar)</option>
+              <option value="zaid">Zaid (Mar–Jun)</option>
+              <option value="perennial">Perennial</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Field Area (acres) *</label><input type="number" id="cpArea" placeholder="e.g. 2.5" step="0.1" min="0.1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Sowing Date *</label><input type="date" id="cpSowDate" title="Select sowing date"></div>
+          <div class="form-group"><label>Expected Harvest *</label><input type="date" id="cpHarvestDate" title="Select harvest date"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Soil Type</label>
+            <select id="cpSoil" title="Select soil type">
+              <option value="">Select soil</option>
+              <option value="loamy">Loamy</option><option value="sandy">Sandy</option>
+              <option value="clay">Clay</option><option value="black">Black Cotton</option>
+              <option value="red">Red Soil</option><option value="silty">Silty</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Irrigation</label>
+            <select id="cpIrrigation" title="Select irrigation method">
+              <option value="">Select method</option>
+              <option value="drip">Drip</option><option value="sprinkler">Sprinkler</option>
+              <option value="flood">Flood/Furrow</option><option value="rainfed">Rainfed</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="cpNotes" rows="2" placeholder="Any additional notes..."></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('addCropModal')">Cancel</button>
+        <button class="btn-primary" onclick="submitCropPlan()">Save Crop Plan 🌾</button>
+      </div>
+      <div class="p-2-1-5"><div id="cropMsg" class="msg-box"></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/crop_planner.js' %}"></script>{% endblock %}

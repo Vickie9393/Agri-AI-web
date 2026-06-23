@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AgriAI — Login</title>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  #loginOtpSection, #signupOtpSection, #loginVerifyBtn, #signupVerifyBtn { display: none; }
+  #loginOtpSection.show, #signupOtpSection.show { display: block; }
+  #loginVerifyBtn.show, #signupVerifyBtn.show { display: block; }
+  .divider { text-align: center; margin: 15px 0; color: #aaa; position: relative; }
+  .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+  .google-btn-wrapper { display: flex; justify-content: center; margin-top: 10px; }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+{% csrf_token %}
+</head>
+<body>
+<div class="bg-scene">
+  <div class="leaf leaf1">🌿</div><div class="leaf leaf2">🌱</div>
+  <div class="leaf leaf3">🍀</div><div class="leaf leaf4">🌾</div><div class="leaf leaf5">🌿</div>
+  {% for i in "12345" %}<div class="particle" data-particle="{{ forloop.counter }}"></div>{% endfor %}
+</div>
+
+<div class="auth-container">
+  <div class="brand animate-in" data-delay="0">
+    <span class="brand-icon">🌿</span>
+    <h1>AgriAI</h1>
+    <p>Smart Farming Intelligence Platform</p>
+  </div>
+
+  <div class="auth-card animate-in" data-delay="1">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab"        onclick="switchTab('signup')">Sign Up</button>
+      <div class="tab-indicator" id="tabIndicator"></div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm" class="form-section active">
+      <div class="form-group">
+        <label>Email or Mobile</label>
+        <div class="input-wrap">
+          <i class="fa fa-user"></i>
+          <input type="text" id="loginIdentifier" placeholder="Enter email or mobile number" autocomplete="username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password (optional)</label>
+        <div class="input-wrap">
+          <i class="fa fa-lock"></i>
+          <input type="password" id="loginPassword" placeholder="Optional — or use OTP only" autocomplete="current-password">
+          <i class="fa fa-eye toggle-pw" onclick="togglePw('loginPassword')"></i>
+        </div>
+      </div>
+      <div id="loginOtpSection" class="otp-section">
+        <label class="otp-label">Enter 6-Digit OTP</label>
+        <div class="otp-inputs">
+          {% for i in "123456" %}<input class="otp-digit login-otp-digit" maxlength="1" type="text" inputmode="numeric">{% endfor %}
+        </div>
+        <p class="otp-timer">Expires in <span id="loginTimer">10:00</span> &nbsp;·&nbsp; <a href="#" onclick="sendLoginOTP();return false">Resend</a></p>
+      </div>
+      <button class="btn-primary" id="loginSendOtpBtn" onclick="sendLoginOTP()">
+        <span>Send OTP & Login</span><i class="fa fa-arrow-right"></i>
+      </button>
+      <button class="btn-primary" id="loginVerifyBtn" onclick="verifyLoginOTP()">
+        <span>Verify & Sign In</span><i class="fa fa-check"></i>
+      </button>
+      
+      <div class="divider"><span>OR</span></div>
+      
+      <div id="g_id_onload"
+           data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
+      </div>
+      <div class="google-btn-wrapper">
+          <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+      </div>
+      
+      <div id="loginMsg" class="msg-box"></div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signupForm" class="form-section">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <div class="input-wrap"><i class="fa fa-user"></i>
+            <input type="text" id="signupName" placeholder="Your full name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Username *</label>
+          <div class="input-wrap"><i class="fa fa-at"></i>
+            <input type="text" id="signupUsername" placeholder="Choose username">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <div class="input-wrap"><i class="fa fa-envelope"></i>
+          <input type="email" id="signupEmail" placeholder="your@email.com" autocomplete="email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mobile (for SMS OTP)</label>
+        <div class="input-wrap"><i class="fa fa-phone"></i>
+          <input type="tel" id="signupMobile" placeholder="+91 9876543210">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <div class="input-wrap"><i class="fa fa-lock"></i>
+          <input type="password" id="signupPassword" placeholder="Minimum 8 characters">
+          <i class="fa fa-eye toggle-pw" onclick="togglePw('signupPassword')"></i>
+        </div>
+      </div>
+      <div id="signupOtpSection" class="otp-section">
+        <label class="otp-label">OTP sent to your Email</label>
+        <div class="otp-inputs">
+          {% for i in "123456" %}<input class="otp-digit signup-otp" maxlength="1" type="text" inputmode="numeric">{% endfor %}
+        </div>
+        <p class="otp-timer">Expires in <span id="signupTimer">10:00</span></p>
+      </div>
+      <button class="btn-primary" id="signupSendOtpBtn" onclick="sendSignupOTP()">
+        <span>Send OTP</span><i class="fa fa-paper-plane"></i>
+      </button>
+      <button class="btn-primary" id="signupVerifyBtn" onclick="verifySignupOTP()">
+        <span>Create Account</span><i class="fa fa-seedling"></i>
+      </button>
+      <div id="signupMsg" class="msg-box"></div>
+    </div>
+  </div>
+  <p class="footer-note animate-in" data-delay="2">🌱 Empowering India's farmers with AI technology</p>
+</div>
+
+<script src="{% static 'js/auth.js' %}"></script>
+</body>
+</html>

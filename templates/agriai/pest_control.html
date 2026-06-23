@@ -1,0 +1,95 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Pest Control — AgriAI{% endblock %}
+{% block nav_pest %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/features.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+<style>
+  #pestResult { display: none; }
+  #pestResult.show { display: block; }
+  .modal-header button { color: inherit; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div><h1>🛡️ Pest Control Centre</h1><p>Identify pests and get AI-powered treatment recommendations</p></div>
+    <button class="btn-primary" onclick="openModal('addPestModal')"><i class="fa fa-plus"></i> Report Pest</button>
+  </div>
+
+  <div class="card animate-in" data-delay="1">
+    <h3>🐛 Quick Reference — Common Pests</h3>
+    <div class="pest-reference-grid">
+      <div class="pest-ref-item" onclick="quickFill('Aphids')"><span>🦗</span><strong>Aphids</strong><small>Sucking pest</small></div>
+      <div class="pest-ref-item" onclick="quickFill('Whitefly')"><span>🦋</span><strong>Whitefly</strong><small>Virus vector</small></div>
+      <div class="pest-ref-item" onclick="quickFill('Bollworm')"><span>🐛</span><strong>Bollworm</strong><small>Fruit borer</small></div>
+      <div class="pest-ref-item" onclick="quickFill('Armyworm')"><span>🐜</span><strong>Armyworm</strong><small>Leaf feeder</small></div>
+      <div class="pest-ref-item" onclick="quickFill('Thrips')"><span>🪲</span><strong>Thrips</strong><small>Tiny pest</small></div>
+      <div class="pest-ref-item" onclick="quickFill('Mites')"><span>🕷️</span><strong>Spider Mites</strong><small>Arachnid</small></div>
+    </div>
+  </div>
+
+  <div class="card animate-in" data-delay="2">
+    <h3>📋 Pest Records</h3>
+    {% if records %}
+    <div class="pest-records">
+      {% for r in records %}
+      <div class="pest-record-card severity-{{ r.severity }}">
+        <div class="pr-header">
+          <span class="pest-name">🐛 {{ r.pest_name|title }}</span>
+          <span class="severity-badge {{ r.severity }}">{{ r.severity|title }}</span>
+          {% if r.resolved %}<span class="resolved-badge">✅ Resolved</span>{% endif %}
+        </div>
+        <div class="pr-body">
+          <p><strong>Crop:</strong> {{ r.crop_name }} &nbsp;|&nbsp; <strong>Affected:</strong> {{ r.affected_area }} acres</p>
+          <p><strong>Symptoms:</strong> {{ r.symptoms }}</p>
+          <p><strong>Pesticide:</strong> {{ r.recommended_pesticide }} — {{ r.dosage }}</p>
+          <p><strong>Method:</strong> {{ r.application_method }}</p>
+          <p class="organic-tip">🌿 Organic: {{ r.organic_alternative }}</p>
+        </div>
+        <div class="pr-date">{{ r.reported_date|date:"d M Y" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><span>🛡️</span><p>No pest records yet. Click <strong>Report Pest</strong> above!</p></div>
+    {% endif %}
+  </div>
+
+  <div class="modal-overlay" id="addPestModal">
+    <div class="modal-card">
+      <div class="modal-header"><h3>🐛 Report Pest Sighting</h3><button onclick="closeModal('addPestModal')" title="Close dialog"><i class="fa fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>Crop Name *</label><input type="text" id="pestCrop" placeholder="e.g. Cotton, Rice"></div>
+          <div class="form-group"><label>Pest Name *</label><input type="text" id="pestName" placeholder="e.g. Aphids, Whitefly"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Severity *</label>
+            <select id="pestSeverity" title="Select severity level">
+              <option value="low">Low — Isolated spots</option>
+              <option value="medium" selected>Medium — Spreading</option>
+              <option value="high">High — Widespread</option>
+              <option value="critical">Critical — Emergency</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Affected Area (acres)</label><input type="number" id="pestArea" placeholder="1.0" step="0.1" value="1"></div>
+        </div>
+        <div class="form-group"><label>Describe Symptoms *</label>
+          <textarea id="pestSymptoms" rows="3" placeholder="e.g. Yellowing leaves, sticky residue, holes in leaves, wilting..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('addPestModal')">Cancel</button>
+        <button class="btn-primary" onclick="submitPestReport()">Get AI Recommendation 🤖</button>
+      </div>
+      <div class="p-2-1-5">
+        <div id="pestMsg" class="msg-box"></div>
+        <div id="pestResult" class="recommendation-box"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/pest_control.js' %}"></script>{% endblock %}

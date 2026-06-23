@@ -1,0 +1,156 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Dashboard — AgriAI{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/utils.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dash-container">
+
+  <div class="dash-hero animate-in" data-delay="0">
+    <div class="hero-text">
+      <h1>Namaste, {{ request.user.first_name|default:request.user.username }} 🌾</h1>
+      <p>Your farm intelligence overview for today</p>
+      <div class="today-date" id="todayDate"></div>
+    </div>
+    <div class="farm-art">🌾🌱🚜🌿🌻</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card green animate-in" data-delay="1">
+      <div class="stat-icon">🌾</div>
+      <span class="stat-num" data-target="{{ crop_count }}">0</span>
+      <span class="stat-label">Active Crops</span>
+      <a href="/crop-planner/" class="stat-link">Manage →</a>
+    </div>
+    <div class="stat-card amber animate-in" data-delay="2">
+      <div class="stat-icon">🔬</div>
+      <span class="stat-num" data-target="{{ disease_count }}">0</span>
+      <span class="stat-label">Disease Scans</span>
+      <a href="/disease/" class="stat-link">Scan Now →</a>
+    </div>
+    <div class="stat-card red animate-in" data-delay="3">
+      <div class="stat-icon">🐛</div>
+      <span class="stat-num" data-target="{{ pest_count }}">0</span>
+      <span class="stat-label">Active Pest Alerts</span>
+      <a href="/pest-control/" class="stat-link">View →</a>
+    </div>
+    <div class="stat-card blue animate-in" data-delay="4">
+      <div class="stat-icon">💊</div>
+      <span class="stat-num" data-target="{{ fertilizer_count }}">0</span>
+      <span class="stat-label">Fertilizer Logs</span>
+      <a href="/fertilizer/" class="stat-link">Calculate →</a>
+    </div>
+  </div>
+
+  <!-- ML Model Status -->
+  <div class="mb-1-5">
+    {% if model_trained %}
+    <span class="model-badge animate-in" data-delay="4">🧠 ML Disease Model Active — Custom trained model loaded</span>
+    {% else %}
+    <span class="model-badge untrained animate-in" data-delay="4">⚡ Rule-Based Mode — <a href="/disease/" class="link-inherit">Upload CSV to train ML model</a></span>
+    {% endif %}
+  </div>
+
+  <h2 class="section-title">🛠️ Your Farming Tools</h2>
+  <div class="features-grid">
+    <a href="/crop-planner/" class="feature-card crop animate-in" data-delay="1">
+      <div class="feat-icon">🌾</div>
+      <h3>Crop Planner</h3>
+      <p>Plan Kharif, Rabi & Zaid crops with sowing dates, harvest timelines and AI tips</p>
+      <div class="feat-arrow">→</div>
+    </a>
+    <a href="/disease/" class="feature-card disease animate-in" data-delay="2">
+      <div class="feat-icon">🔬</div>
+      <h3>Disease AI</h3>
+      <p>Upload crop photos for instant AI diagnosis. Train your own model with CSV data</p>
+      <div class="feat-arrow">→</div>
+    </a>
+    <a href="/pest-control/" class="feature-card pest animate-in" data-delay="3">
+      <div class="feat-icon">🛡️</div>
+      <h3>Pest Control</h3>
+      <p>Log pest sightings and get organic & chemical treatment plans instantly</p>
+      <div class="feat-arrow">→</div>
+    </a>
+    <a href="/fertilizer/" class="feature-card fertilizer animate-in" data-delay="4">
+      <div class="feat-icon">💊</div>
+      <h3>Fertilizer Calc</h3>
+      <p>Calculate precise NPK requirements with cost estimate and application schedule</p>
+      <div class="feat-arrow">→</div>
+    </a>
+    <a href="/weather/" class="feature-card weather animate-in" data-delay="5">
+      <div class="feat-icon">🌤️</div>
+      <h3>Weather Forecast</h3>
+      <p>5-day localized forecast with AI farming advisories for your exact location</p>
+      <div class="feat-arrow">→</div>
+    </a>
+    <div class="feature-card chatbot animate-in cursor-pointer" data-delay="6" onclick="toggleChatbot()">
+      <div class="feat-icon">🤖</div>
+      <h3>AgriBot AI Chat</h3>
+      <p>Ask anything about farming — weather, diseases, crops, pests, fertilizers</p>
+      <div class="feat-arrow">→</div>
+    </div>
+  </div>
+
+  <div class="activity-row">
+    <div class="activity-card animate-in" data-delay="7">
+      <h3>🌾 Recent Crop Plans</h3>
+      {% if recent_crops %}
+        <div class="activity-list">
+          {% for c in recent_crops %}
+          <div class="activity-item">
+            <div class="ai-icon">🌱</div>
+            <div class="ai-info">
+              <strong>{{ c.crop_name|title }}</strong>
+              <small>{{ c.season|title }} · {{ c.field_area }} acres · <span class="text-green-mid">{{ c.status|title }}</span></small>
+            </div>
+            <div class="ai-date">{{ c.sowing_date|date:"d M" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><span>🌱</span><p>No crops planned yet</p><a href="/crop-planner/" class="btn-sm">Plan Now</a></div>
+      {% endif %}
+    </div>
+    <div class="activity-card animate-in" data-delay="8">
+      <h3>🔬 Recent Disease Scans</h3>
+      {% if recent_disease %}
+        <div class="activity-list">
+          {% for r in recent_disease %}
+          <div class="activity-item">
+            <div class="ai-icon">🦠</div>
+            <div class="ai-info">
+              <strong>{{ r.crop_name|title }}</strong>
+              <small>{{ r.detected_disease|default:"Analysing..." }} · {{ r.severity|default:"" }} · {{ r.model_used }}</small>
+            </div>
+            <div class="ai-date">{{ r.created_at|date:"d M" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><span>🔬</span><p>No scans yet</p><a href="/disease/" class="btn-sm">Scan Now</a></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('todayDate').textContent =
+  new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.querySelectorAll('.stat-num').forEach(el => {
+  const target = +el.dataset.target || 0;
+  let n = 0; const step = Math.max(1, Math.ceil(target/30));
+  const iv = setInterval(() => {
+    n = Math.min(n + step, target);
+    el.textContent = n;
+    if (n >= target) clearInterval(iv);
+  }, 55);
+});
+</script>
+{% endblock %}

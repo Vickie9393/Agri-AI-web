@@ -1,0 +1,72 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}Weather Forecast — AgriAI{% endblock %}
+{% block nav_weather %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/features.css' %}">{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="page-header">
+    <div><h1>🌤️ Weather Forecast</h1><p>Real-time weather with AI farming advisories for your location</p></div>
+  </div>
+
+  <div class="card location-bar animate-in" style="--d:0">
+    <div class="location-search">
+      <i class="fa fa-search"></i>
+      <input type="text" id="locationInput" placeholder="Search city, village, or district..."
+             onkeypress="if(event.key==='Enter')searchWeather()">
+      <button class="btn-primary sm" onclick="searchWeather()">Search</button>
+    </div>
+    <button class="btn-outline sm" onclick="getGPSWeather()">
+      <i class="fa fa-location-arrow"></i> Use My Location
+    </button>
+  </div>
+
+  <div class="weather-main" id="weatherMain" style="display:none">
+    <div class="card current-weather animate-in" style="--d:1">
+      <div class="weather-placeholder" id="weatherPlaceholder">
+        <div style="font-size:3rem">🌤️</div>
+        <p>Search a location or use GPS to get weather data</p>
+      </div>
+      <div id="currentWeatherData" style="display:none">
+        <div class="cw-top">
+          <div class="cw-location"><i class="fa fa-map-marker-alt" style="color:var(--red)"></i><span id="cwLocation">—</span></div>
+          <div class="cw-date" id="cwDate"></div>
+        </div>
+        <div class="cw-main">
+          <div class="cw-icon-temp">
+            <img id="cwIcon" src="" alt="" class="weather-icon-lg">
+            <div class="cw-temp" id="cwTemp">—°C</div>
+          </div>
+          <div class="cw-condition" id="cwCondition">—</div>
+          <div class="cw-feels">Feels like <span id="cwFeels">—</span>°C</div>
+        </div>
+        <div class="cw-stats">
+          <div class="cw-stat"><i class="fa fa-tint"></i><span id="cwHumidity">—</span><small>Humidity</small></div>
+          <div class="cw-stat"><i class="fa fa-wind"></i><span id="cwWind">—</span><small>Wind</small></div>
+          <div class="cw-stat"><i class="fa fa-compress-arrows-alt"></i><span id="cwPressure">—</span><small>Pressure</small></div>
+          <div class="cw-stat"><i class="fa fa-eye"></i><span id="cwVisibility">—</span><small>Visibility</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="advisory-card animate-in" style="--d:2;display:none" id="advisoryCard">
+      <div class="advisory-header"><i class="fa fa-tractor"></i> Farming Advisory</div>
+      <p class="advisory-text" id="advisoryText">Loading advisory...</p>
+    </div>
+  </div>
+
+  <div class="card animate-in" style="--d:3" id="forecastCard">
+    <h3>📅 5-Day Forecast</h3>
+    <div id="forecastPlaceholder" style="text-align:center;padding:2rem;color:var(--text-muted)">Search a location above to see the 5-day forecast</div>
+    <div class="forecast-grid" id="forecastGrid" style="display:none"></div>
+  </div>
+</div>
+
+<div class="weather-loading" id="weatherLoading" style="display:none">
+  <div class="weather-loader">
+    <span class="cloud-anim">☁️</span>
+    <p>Fetching weather data...</p>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/weather.js' %}"></script>{% endblock %}
