@@ -7,6 +7,10 @@ async function calculateFertilizer() {
   const area  = document.getElementById('fcArea')?.value;
   const soil  = document.getElementById('fcSoil')?.value;
   const stage = document.getElementById('fcStage')?.value;
+  
+  const soilN = document.getElementById('soilN')?.value || 0;
+  const soilP = document.getElementById('soilP')?.value || 0;
+  const soilK = document.getElementById('soilK')?.value || 0;
 
   if (!crop)        return showMsg('fertMsg','error','⚠️ Select a crop type');
   if (!area||+area<=0) return showMsg('fertMsg','error','⚠️ Enter a valid field area');
@@ -17,7 +21,15 @@ async function calculateFertilizer() {
   try {
     const res  = await fetch('/api/fertilizer/calculate/', {
       method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
-      body: JSON.stringify({ crop_name:crop, field_area:parseFloat(area), soil_type:soil, crop_stage:stage })
+      body: JSON.stringify({ 
+        crop_name:crop, 
+        field_area:parseFloat(area), 
+        soil_type:soil, 
+        crop_stage:stage,
+        soil_n: parseFloat(soilN),
+        soil_p: parseFloat(soilP),
+        soil_k: parseFloat(soilK)
+      })
     });
     const data = await res.json();
     if (data.success) {
@@ -44,6 +56,9 @@ function displayFertResult(data) {
   document.getElementById('mopQty').textContent  = `${data.mop} kg`;
   document.getElementById('costVal').textContent = `₹${data.estimated_cost.toLocaleString('en-IN')}`;
   document.getElementById('scheduleText').textContent = data.schedule;
+  
+  const orgEl = document.getElementById('organicText');
+  if (orgEl) orgEl.textContent = data.organic || "Use vermicompost for better soil health.";
 
   const maxVal = Math.max(data.nitrogen, data.phosphorus, data.potassium, 1);
   setTimeout(() => {

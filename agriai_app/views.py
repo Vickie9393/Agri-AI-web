@@ -90,26 +90,40 @@ def get_csrf(request):
 
 # ─── Email OTP Sender ────────────────────────────────────────
 def send_otp_email(email, otp_code, purpose):
-    """
-    🔑 Uses: EMAIL_HOST_USER, EMAIL_HOST_PASSWORD in settings.py
-    Setup: Gmail → Account → Security → App Passwords → Generate
-    """
+    """Sends OTP email over HTTPS using Resend API (bypasses Render SMTP block)."""
     try:
-        send_mail(
-            subject=f'AgriAI OTP — {purpose.title()}',
-            message=(
-                f'Dear AgriAI User,\n\n'
-                f'Your One-Time Password (OTP) is:  {otp_code}\n\n'
-                f'Valid for {settings.OTP_EXPIRY_MINUTES} minutes.\n'
-                f'Do NOT share with anyone.\n\n'
-                f'— AgriAI Team 🌿'
-            ),
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[email],
-            fail_silently=False,
+        response = requests.post(
+            'https://api.resend.com/emails',
+            headers={
+                'Authorization': f'Bearer {settings.RESEND_API_KEY}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'from': 'AgriAI <onboarding@resend.dev>',
+                'to': [email],
+                'subject': f'AgriAI OTP — {purpose.title()} Verification',
+                'html': f'''
+                    <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h2 style="color: #2e7d32;">AgriAI Verification Code 🌿</h2>
+                        <p>Dear User,</p>
+                        <p>Your One-Time Password (OTP) for <strong>{purpose}</strong> is:</p>
+                        <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #1b5e20; background: #e8f5e9; padding: 12px; text-align: center; border-radius: 6px; margin: 15px 0;">
+                            {otp_code}
+                        </div>
+                        <p style="color: #666; font-size: 13px;">This code is valid for {settings.OTP_EXPIRY_MINUTES} minutes. Do not share it with anyone.</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                        <p style="color: #999; font-size: 12px;">— AgriAI Team</p>
+                    </div>
+                '''
+            },
+            timeout=10
         )
-        return True, None
+        if response.status_code in [200, 201]:
+            return True, None
+        else:
+            return False, response.text
     except Exception as e:
+        print(f"Error sending email via Resend API: {e}")
         return False, str(e)
 
 
@@ -244,34 +258,36 @@ def api_send_otp(request):
     if request.method != 'POST':
         return err('Method not allowed', 405)
 
-    data       = parse_body(request)
-    identifier = data.get('identifier', '').strip()
-    otp_type   = data.get('type', 'email')
-    purpose    = data.get('purpose', 'login')
+    try:
+        data       = parse_body(request)
+        identifier = data.get('identifier', '').strip()
+        otp_type   = data.get('type', 'email')
+        purpose    = data.get('purpose', 'login')
 
-    if not identifier:
-        return err('Email or mobile number is required')
+        if not identifier:
+            return err('Email or mobile number is required')
 
-    # Invalidate old OTPs
-    OTP.objects.filter(identifier=identifier, is_used=False).update(is_used=True)
+        # Invalidate old OTPs
+        OTP.objects.filter(identifier=identifier, is_used=False).update(is_used=True)
 
-    otp_code = OTP.generate()
-    OTP.objects.create(identifier=identifier, otp_code=otp_code, otp_type=otp_type, purpose=purpose)
+        otp_code = OTP.generate()
+        OTP.objects.create(identifier=identifier, otp_code=otp_code, otp_type=otp_type, purpose=purpose)
 
-    if otp_type == 'email':
-        success, error = send_otp_email(identifier, otp_code, purpose)
-    else:
-        success, error = send_otp_sms(identifier, otp_code)
+        # Run OTP sending in a background thread to prevent slow SMTP from causing network timeouts
+        if otp_type == 'email':
+            threading.Thread(target=send_otp_email, args=(identifier, otp_code, purpose)).start()
+        else:
+            threading.Thread(target=send_otp_sms, args=(identifier, otp_code)).start()
 
-    if success:
-        return ok(message=f'OTP sent to your {otp_type}')
-    else:
-        # Demo mode: return OTP in response (REMOVE IN PRODUCTION)
-        return ok(
-            message=f'[DEMO] OTP is: {otp_code}  (Setup error: {error})', 
-            demo_otp=otp_code,
-            error_reason=error
-        )
+        res_data = {'message': f'OTP sent to your {otp_type}'}
+        
+        # Log the OTP to the console for debugging, but never send it to the frontend
+        if getattr(settings, 'DEBUG', False):
+            print(f"[*] Generated {otp_type} OTP for {identifier}: {otp_code}")
+
+        return ok(**res_data)
+    except Exception as e:
+        return err(f"Server Error: {str(e)}", 500)
 
 @csrf_exempt
 def api_google_login(request):

@@ -94,7 +94,9 @@
 /* ── Modal ── */
 .modal-overlay {
   position:fixed; inset:0; z-index:2000;
-  background:rgba(0,0,0,.5); backdrop-filter:blur(5px);
+  background:rgba(0,0,0,.5); 
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
   display:none; align-items:center; justify-content:center; padding:1rem;
 }
 .modal-overlay.open { display:flex; }
@@ -347,6 +349,16 @@
 .cloud-anim { font-size:4.5rem; animation:cloudFloat 1.8s ease infinite; display:block; margin-bottom:1rem; }
 @keyframes cloudFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
 .weather-loader p { color:var(--text-muted); font-size:.9rem; }
+
+/* ── Utility Classes ── */
+.hidden { display:none; }
+.delay-0 { --d:0; }
+.delay-1 { --d:1; }
+.delay-2 { --d:2; }
+.delay-3 { --d:3; }
+.emoji-lg { font-size:3rem; }
+.text-red { color:var(--red); }
+.forecast-placeholder { text-align:center; padding:2rem; color:var(--text-muted); }
 
 @media (max-width:960px) {
   .upload-analysis-grid { grid-template-columns:1fr; }

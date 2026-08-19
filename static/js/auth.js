@@ -102,7 +102,8 @@ async function sendLoginOTP() {
       btn.disabled = false;
       btn.innerHTML = '<span>Send OTP & Login</span><i class="fa fa-arrow-right"></i>';
     }
-  } catch {
+  } catch (err) {
+    console.error("Login OTP Error:", err);
     showMsg('loginMsg','error','❌ Network error. Try again.');
     btn.disabled = false;
     btn.innerHTML = '<span>Send OTP & Login</span><i class="fa fa-arrow-right"></i>';
@@ -199,7 +200,8 @@ async function sendSignupOTP() {
       showMsg('signupMsg','error','❌ '+(data.error||'Failed'));
       btn.disabled=false; btn.innerHTML='<span>Send OTP</span><i class="fa fa-paper-plane"></i>';
     }
-  } catch {
+  } catch (err) {
+    console.error("Signup OTP Error:", err);
     showMsg('signupMsg','error','❌ Network error.');
     btn.disabled=false; btn.innerHTML='<span>Send OTP</span><i class="fa fa-paper-plane"></i>';
   }

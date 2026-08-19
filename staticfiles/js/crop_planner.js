@@ -60,7 +60,15 @@ async function deleteCrop(id, btn) {
   } catch { btn.innerHTML='<i class="fa fa-trash"></i>'; }
 }
 
-// Set default dates
+function deleteCropHandler(e) {
+  const btn = e.target.closest('.delete-crop-btn');
+  if (btn) {
+    const id = btn.getAttribute('data-crop-id');
+    deleteCrop(id, btn);
+  }
+}
+
+// Set default dates and attach event listeners
 document.addEventListener('DOMContentLoaded', () => {
   const today   = new Date().toISOString().split('T')[0];
   const harvest = new Date(Date.now()+120*86400000).toISOString().split('T')[0];
@@ -68,4 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const h = document.getElementById('cpHarvestDate');
   if(s&&!s.value) s.value=today;
   if(h&&!h.value) h.value=harvest;
+  
+  // Attach delete button listeners
+  document.addEventListener('click', deleteCropHandler);
 });

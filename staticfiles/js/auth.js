@@ -77,7 +77,7 @@ function getCsrf() {
 // ════════════════════════
 async function sendLoginOTP() {
   const identifier = document.getElementById('loginIdentifier').value.trim();
-  if (!identifier) return showMsg('loginMsg','error','⚠️ Enter your email or mobile number');
+  if (!identifier || !identifier.includes('@')) return showMsg('loginMsg','error','⚠️ Enter a valid email address');
 
   const btn = document.getElementById('loginSendOtpBtn');
   btn.disabled = true;
@@ -87,7 +87,7 @@ async function sendLoginOTP() {
     const res  = await fetch('/api/auth/send-otp/', {
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
-      body: JSON.stringify({ identifier, type: identifier.includes('@')?'email':'mobile', purpose:'login' })
+      body: JSON.stringify({ identifier, type: 'email', purpose:'login' })
     });
     const data = await res.json();
     if (data.success) {
@@ -102,7 +102,8 @@ async function sendLoginOTP() {
       btn.disabled = false;
       btn.innerHTML = '<span>Send OTP & Login</span><i class="fa fa-arrow-right"></i>';
     }
-  } catch {
+  } catch (err) {
+    console.error("Login OTP Error:", err);
     showMsg('loginMsg','error','❌ Network error. Try again.');
     btn.disabled = false;
     btn.innerHTML = '<span>Send OTP & Login</span><i class="fa fa-arrow-right"></i>';
@@ -135,6 +136,31 @@ async function verifyLoginOTP() {
     }
   } catch {
     showMsg('loginMsg','error','❌ Network error.'); btn.disabled=false; btn.innerHTML='<span>Verify & Sign In</span><i class="fa fa-check"></i>';
+  }
+}
+
+// ════════════════════════
+// GOOGLE LOGIN HANDLER
+// ════════════════════════
+async function handleCredentialResponse(response) {
+  if (!response.credential) return;
+  
+  showMsg('loginMsg', 'success', '🔄 Verifying Google Login...');
+  try {
+    const res = await fetch('/api/auth/google/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showMsg('loginMsg', 'success', '✅ Google Login successful! Redirecting...');
+      setTimeout(() => window.location.href = data.redirect || '/dashboard/', 700);
+    } else {
+      showMsg('loginMsg', 'error', '❌ ' + (data.error || 'Google Login failed'));
+    }
+  } catch (err) {
+    showMsg('loginMsg', 'error', '❌ Network error during Google login.');
   }
 }
 
@@ -174,7 +200,8 @@ async function sendSignupOTP() {
       showMsg('signupMsg','error','❌ '+(data.error||'Failed'));
       btn.disabled=false; btn.innerHTML='<span>Send OTP</span><i class="fa fa-paper-plane"></i>';
     }
-  } catch {
+  } catch (err) {
+    console.error("Signup OTP Error:", err);
     showMsg('signupMsg','error','❌ Network error.');
     btn.disabled=false; btn.innerHTML='<span>Send OTP</span><i class="fa fa-paper-plane"></i>';
   }
@@ -198,7 +225,7 @@ async function verifySignupOTP() {
         username:  document.getElementById('signupUsername').value.trim(),
         password:  document.getElementById('signupPassword').value,
         full_name: document.getElementById('signupName').value.trim(),
-        mobile:    document.getElementById('signupMobile').value.trim(),
+        mobile:    '',
       })
     });
     const data = await res.json();

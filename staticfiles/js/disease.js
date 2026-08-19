@@ -273,6 +273,37 @@ async function uploadDataset() {
   btn.innerHTML = '<i class="fa fa-upload"></i> Upload Dataset';
 }
 
+async function autoSetupDataset() {
+  const btn = document.getElementById('autoSetupBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generating & Training...';
+  
+  showMsg('autoSetupMsg', 'success', '⚙️ Processing auto-setup. Please wait...');
+  
+  try {
+    const res = await fetch('/api/disease/auto-setup/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrf() }
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      showMsg('autoSetupMsg', 'success', `✅ ${data.message}`);
+      // Switch tab and jump to polling
+      // Wait a moment and then reload instead of complex UI updates
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      showMsg('autoSetupMsg', 'error', '❌ ' + (data.error || 'Failed'));
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa fa-magic"></i> Auto Setup Demo Dataset & Train';
+    }
+  } catch (e) {
+    showMsg('autoSetupMsg', 'error', '❌ Network error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-magic"></i> Auto Setup Demo Dataset & Train';
+  }
+}
+
 function showDatasetPreview(data) {
   const preview = document.getElementById('datasetPreview');
   const stats   = document.getElementById('datasetStats');

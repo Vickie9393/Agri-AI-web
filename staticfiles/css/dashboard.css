@@ -1,6 +1,33 @@
 /* ═══════════════════════════════════════
    AgriAI — Dashboard CSS
 ═══════════════════════════════════════ */
+
+/* Animate In */
+.animate-in {
+  animation: fadeSlideIn 0.6s ease-out forwards;
+}
+
+.animate-in[data-delay="0"] { animation-delay: 0s; }
+.animate-in[data-delay="1"] { animation-delay: 0.15s; }
+.animate-in[data-delay="2"] { animation-delay: 0.3s; }
+.animate-in[data-delay="3"] { animation-delay: 0.45s; }
+.animate-in[data-delay="4"] { animation-delay: 0.6s; }
+.animate-in[data-delay="5"] { animation-delay: 0.75s; }
+.animate-in[data-delay="6"] { animation-delay: 0.9s; }
+.animate-in[data-delay="7"] { animation-delay: 1.05s; }
+.animate-in[data-delay="8"] { animation-delay: 1.2s; }
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .dash-container { max-width:1200px; margin:0 auto; padding:2rem; }
 
 /* Hero */
