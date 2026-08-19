@@ -18,6 +18,7 @@ urlpatterns = [
     path('pest-control/', views.pest_view,       name='pest_control'),
     path('fertilizer/',   views.fertilizer_view, name='fertilizer'),
     path('weather/',      views.weather_view,    name='weather'),
+    path('profile/',      views.profile_view,    name='profile'),
 
     # ── AUTH APIs ─────────────────────────────────────────
     path('api/auth/send-otp/',        views.api_send_otp,        name='api_send_otp'),

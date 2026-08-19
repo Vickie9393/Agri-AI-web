@@ -1,0 +1,108 @@
+{% extends 'agriai/base.html' %}
+{% load static %}
+{% block title %}My Profile — AgriAI{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .profile-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    display: inline-block;
+    color: #10b981;
+    background: #ecfdf5;
+    padding: 20px;
+    border-radius: 50%;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #1f2937;
+    transition: all 0.2s;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+  .btn-save {
+    width: 100%;
+    padding: 14px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+  }
+  .btn-save:hover {
+    background: #059669;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="profile-container animate-in" data-delay="1">
+    <div class="profile-header">
+      <div class="profile-icon">👨‍🌾</div>
+      <h2>My Profile</h2>
+      <p class="text-muted">Update your personal details below.</p>
+    </div>
+
+    <form method="POST" action="{% url 'profile' %}">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" value="{{ request.user.username }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" value="{{ request.user.email }}" required>
+      </div>
+
+      <div style="display: flex; gap: 20px;">
+        <div class="form-group" style="flex: 1;">
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" name="first_name" value="{{ request.user.first_name }}">
+        </div>
+
+        <div class="form-group" style="flex: 1;">
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" name="last_name" value="{{ request.user.last_name }}">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save">Save Changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -18,7 +18,7 @@
   <div class="page-header">
     <div>
       <h1>🔬 Crop Disease Recognition</h1>
-      <p>Upload a photo for instant AI diagnosis — or train your own model with a CSV dataset</p>
+      <p>Upload a photo for instant AI diagnosis powered by Deep Learning</p>
     </div>
     <div class="header-badges">
       {% if model_trained %}
@@ -34,7 +34,7 @@
   ══════════════════════════════════════ -->
   <div class="disease-tabs animate-in" data-delay="0">
     <button class="dtab active" onclick="switchDTab('analyze', this)">🔍 Analyze Image</button>
-    <button class="dtab"        onclick="switchDTab('train',   this)">🧠 Train ML Model</button>
+    <button class="dtab"        onclick="switchDTab('train',   this)">🧠 AI Model Info</button>
     <button class="dtab"        onclick="switchDTab('history', this)">📋 Scan History</button>
   </div>
 
@@ -99,7 +99,7 @@
             <div class="tip-item">✅ Focus on the affected leaf/stem</div>
             <div class="tip-item">✅ Capture both healthy and diseased parts</div>
             <div class="tip-item">✅ Avoid blurry or dark images</div>
-            <div class="tip-item">🧠 Train your own model with the CSV tab above!</div>
+            <div class="tip-item">🧠 Powered by TensorFlow CNN model</div>
           </div>
         </div>
 
@@ -167,71 +167,12 @@
 
       <!-- Upload Dataset Card -->
       <div class="card animate-in" data-delay="1">
-        <h3>📁 Upload Training Dataset (CSV)</h3>
-
-        <div class="csv-info-box">
-          <h4>📋 Required CSV Format</h4>
-          <p>Your CSV must have a <code>label</code> column with disease names, plus either:</p>
-          <div class="csv-format-tabs">
-            <div class="csv-fmt-option">
-              <strong>Option A — Pre-computed Features</strong>
-              <code>label, r_mean, g_mean, b_mean, r_std, g_std, b_std, hue_mean, sat_mean, val_mean, dx, dy, gray_mean, gray_std, r_ratio, g_ratio, b_ratio</code>
-            </div>
-            <div class="csv-fmt-option">
-              <strong>Option B — Image Paths</strong>
-              <code>label, image_path</code>
-              <small>Features auto-extracted from each image</small>
-            </div>
-            <div class="csv-fmt-option">
-              <strong>Option C — Labels Only (Demo)</strong>
-              <code>label</code>
-              <small>Works for testing. Use Options A/B for real accuracy.</small>
-            </div>
-          </div>
-          <div class="csv-example">
-            <strong>Example rows:</strong><br>
-            <code>label,r_mean,g_mean,b_mean,r_std,...</code><br>
-            <code>Yellow Rust,180,140,90,25,...</code><br>
-            <code>Healthy,80,160,70,12,...</code>
-          </div>
-        </div>
-
-        <!-- CSV Drop Zone -->
-        <div class="csv-drop-zone" id="csvDropZone" onclick="document.getElementById('csvFileInput').click()">
-          <span class="csv-icon">📊</span>
-          <p id="csvDropText">Click to upload CSV dataset</p>
-          <small>Max 50MB • Must have "label" column</small>
-        </div>
-        <input type="file" id="csvFileInput" accept=".csv" onchange="handleCsvSelect(this)" class="hidden-input">
-
-        <div class="form-group mt-1 mb-0-6">
-          <label>Dataset Name</label>
-          <input type="text" id="datasetName" placeholder="e.g. Wheat Disease Dataset 2025" class="field-input">
-        </div>
-        <div class="form-group">
-          <label>Description (optional)</label>
-          <textarea id="datasetDesc" rows="2" placeholder="Source, crop types covered..." class="field-input"></textarea>
-        </div>
-
-        <button class="btn-primary full" onclick="uploadDataset()" id="uploadDatasetBtn">
-          <i class="fa fa-upload"></i> Upload Dataset
-        </button>
-        <div id="uploadMsg" class="msg-box"></div>
-        
-        <div class="divider" style="text-align: center; margin: 15px 0; color: #aaa; position: relative;">
-          <span style="background: white; padding: 0 10px; position: relative; z-index: 1;">OR</span>
-          <div style="position: absolute; top: 50%; width: 100%; height: 1px; background: #ddd; left: 0; z-index: 0;"></div>
-        </div>
-        
-        <button class="btn-primary full" onclick="autoSetupDataset()" id="autoSetupBtn" style="background-color: #0d9488; border-color: #0f766e;">
-          <i class="fa fa-magic"></i> Auto Setup Demo Dataset & Train
-        </button>
-        <div id="autoSetupMsg" class="msg-box"></div>
-
-        <!-- Dataset Preview -->
-        <div id="datasetPreview" class="dataset-preview-box hidden-div mt-1">
-          <h4>📊 Dataset Summary</h4>
-          <div id="datasetStats"></div>
+        <h3>🧠 Deep Learning CNN</h3>
+        <p>This application uses a Convolutional Neural Network (CNN) built with TensorFlow to analyze crop images.</p>
+        <div class="csv-info-box mt-1">
+          <h4>Command Line Training</h4>
+          <p>Training is now handled via the command line for maximum performance. Run the following command in your terminal to train or retrain the model:</p>
+          <code>python agriai_app/ml/train_cnn.py</code>
         </div>
       </div>
 
@@ -245,16 +186,16 @@
           <div class="status-indicator trained">
             <span class="status-dot"></span>
             <div>
-              <strong>✅ Trained Model Active</strong>
-              <small>AI is using your custom trained model for disease detection</small>
+              <strong>✅ CNN Model Active</strong>
+              <small>AI is using your custom trained Convolutional Neural Network for disease detection</small>
             </div>
           </div>
           {% else %}
           <div class="status-indicator untrained">
             <span class="status-dot"></span>
             <div>
-              <strong>⚡ No Trained Model</strong>
-              <small>Using rule-based color analysis. Upload CSV to train ML model!</small>
+              <strong>⚡ No CNN Model Found</strong>
+              <small>Using rule-based color analysis. Run train_cnn.py to generate a model!</small>
             </div>
           </div>
           {% endif %}

@@ -77,7 +77,7 @@ function getCsrf() {
 // ════════════════════════
 async function sendLoginOTP() {
   const identifier = document.getElementById('loginIdentifier').value.trim();
-  if (!identifier) return showMsg('loginMsg','error','⚠️ Enter your email or mobile number');
+  if (!identifier || !identifier.includes('@')) return showMsg('loginMsg','error','⚠️ Enter a valid email address');
 
   const btn = document.getElementById('loginSendOtpBtn');
   btn.disabled = true;
@@ -87,7 +87,7 @@ async function sendLoginOTP() {
     const res  = await fetch('/api/auth/send-otp/', {
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
-      body: JSON.stringify({ identifier, type: identifier.includes('@')?'email':'mobile', purpose:'login' })
+      body: JSON.stringify({ identifier, type: 'email', purpose:'login' })
     });
     const data = await res.json();
     if (data.success) {
@@ -223,7 +223,7 @@ async function verifySignupOTP() {
         username:  document.getElementById('signupUsername').value.trim(),
         password:  document.getElementById('signupPassword').value,
         full_name: document.getElementById('signupName').value.trim(),
-        mobile:    document.getElementById('signupMobile').value.trim(),
+        mobile:    '',
       })
     });
     const data = await res.json();

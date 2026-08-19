@@ -17,9 +17,9 @@ requests>=2.31
 
 ## ── ML / AI (Disease Detection) ──────────────────────────
 ## These enable the CSV → trained model pipeline
-scikit-learn>=1.3
 numpy>=1.24
 pandas>=2.0              # For robust CSV parsing
+tensorflow>=2.15         # For CNN model training and prediction
 
 ## ── SMS OTP (optional) ───────────────────────────────────
 ## Get credentials at: https://www.twilio.com

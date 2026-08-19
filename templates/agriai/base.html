@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>{% block title %}AgriAI{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/base.css' %}">
 <link rel="stylesheet" href="{% static 'css/utils.css' %}">
@@ -42,7 +43,7 @@
         <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
         <small>{{ request.user.email }}</small>
       </div>
-      <a href="#"><i class="fa fa-user"></i> My Profile</a>
+      <a href="{% url 'profile' %}"><i class="fa fa-user"></i> My Profile</a>
       <a href="/admin/" target="_blank"><i class="fa fa-cog"></i> Admin Panel</a>
       <a href="/logout/" class="logout-link"><i class="fa fa-sign-out-alt"></i> Logout</a>
     </div>
@@ -118,15 +119,15 @@
       <div class="contact-items">
         <div class="contact-item">
           <div class="ci-icon"><i class="fa fa-map-marker-alt"></i></div>
-          <div><strong>Address</strong><span>Agri Tower, Green Valley, New Delhi — 110001</span></div>
+          <div><strong>Address</strong><span>Lucknow, Uttar Pradesh 226028, India</span></div>
         </div>
         <div class="contact-item">
           <div class="ci-icon"><i class="fa fa-phone"></i></div>
-          <div><strong>Helpline</strong><span>1800-180-1551 (Kisan Call Centre)</span></div>
+          <div><strong>Helpline</strong><span>XXXX-XXX-XXX</span></div>
         </div>
         <div class="contact-item">
           <div class="ci-icon"><i class="fa fa-envelope"></i></div>
-          <div><strong>Email</strong><span>support@agriai.in</span></div>
+          <div><strong>Email</strong><span>shivamshah3111@gmail.com</span></div>
         </div>
         <div class="contact-item">
           <div class="ci-icon"><i class="fa fa-clock"></i></div>
@@ -134,11 +135,10 @@
         </div>
       </div>
       <div class="social-links">
-        <a href="#" class="social-btn" title="Twitter"><i class="fab fa-twitter"></i></a>
-        <a href="#" class="social-btn" title="Facebook"><i class="fab fa-facebook"></i></a>
-        <a href="#" class="social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" class="social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
-        <a href="#" class="social-btn" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        <a href="https://x.com/VickieShivam" target="_blank" class="social-btn" title="Twitter/X"><i class="fab fa-twitter"></i></a>
+        <a href="https://www.facebook.com/share/1b1Ac4jv5n/" target="_blank" class="social-btn" title="Facebook"><i class="fab fa-facebook"></i></a>
+        <a href="https://www.instagram.com/ig_.vickie?igsi=MWd5YnNtcnJ0ZnM0cw==" target="_blank" class="social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.linkedin.com/in/shivam-shah-4a83232a8?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" class="social-btn" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
       </div>
     </div>
     <div class="contact-form-wrap">
@@ -155,7 +155,7 @@
 
 <footer class="site-footer">
   <div class="footer-brand">🌿 AgriAI — Empowering India's 140M+ Farmers with AI</div>
-  <p>© 2025 AgriAI · Built with 💚 · <a href="/admin/" class="text-green-pale">Admin</a></p>
+  <p>© 2025 AgriAI · Created by <strong>Shivam</strong> 💚 · <a href="/admin/" class="text-green-pale">Admin</a></p>
 </footer>
 
 <script src="{% static 'js/base.js' %}"></script>

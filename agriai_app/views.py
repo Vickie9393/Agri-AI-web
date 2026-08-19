@@ -157,7 +157,9 @@ def farming_advisory(temp, humidity, condition):
 def home_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-    return render(request, 'agriai/auth.html')
+    return render(request, 'agriai/auth.html', {
+        'google_client_id': settings.GOOGLE_OAUTH_CLIENT_ID
+    })
 
 def logout_view(request):
     logout(request)
@@ -205,6 +207,24 @@ def fertilizer_view(request):
 @login_required(login_url='/')
 def weather_view(request):
     return render(request, 'agriai/weather.html')
+
+@login_required(login_url='/')
+def profile_view(request):
+    if request.method == 'POST':
+        user = request.user
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+
+        if first_name: user.first_name = first_name
+        if last_name: user.last_name = last_name
+        if username: user.username = username
+        if email: user.email = email
+        user.save()
+        return redirect('dashboard')
+        
+    return render(request, 'agriai/profile.html')
 
 
 # ═══════════════════════════════════════════════════════════
@@ -656,44 +676,9 @@ def api_disease_train(request):
     dataset.training_log = 'Training started...'
     dataset.save()
 
-    # ── Run training in background thread ─────────────────
-    def train_thread():
-        from .ml.disease_engine import train_from_csv
-        try:
-            model_path = str(settings.DISEASE_MODEL_PATH)
-            le_path    = str(settings.LABEL_ENCODER_PATH)
-            os.makedirs(os.path.dirname(model_path), exist_ok=True)
-
-            result = train_from_csv(
-                csv_path          = dataset.csv_file.path,
-                model_save_path   = model_path,
-                label_encoder_path= le_path,
-                dataset_record_id = dataset.id
-            )
-
-            if 'error' in result:
-                dataset.status       = 'failed'
-                dataset.training_log = result['error']
-            else:
-                dataset.status        = 'trained'
-                dataset.accuracy      = result['accuracy']
-                dataset.label_names   = result['label_names']
-                dataset.training_log  = result['log']
-                dataset.model_path    = model_path
-                dataset.trained_at    = timezone.now()
-
-        except Exception as e:
-            dataset.status       = 'failed'
-            dataset.training_log = f'Training failed: {str(e)}'
-
-        dataset.save()
-
-    thread = threading.Thread(target=train_thread, daemon=True)
-    thread.start()
-
     return ok(
         dataset_id = dataset.id,
-        message    = '🚀 Training started in background! Poll /api/disease/model-status/ to check progress.',
+        message    = '🚀 CNN training is now handled via the command line script: python train_cnn.py',
     )
 
 
@@ -805,42 +790,7 @@ def api_disease_auto_setup(request):
     dataset.training_log = 'Training started automatically...'
     dataset.save()
     
-    # Start training thread
-    def train_thread():
-        from .ml.disease_engine import train_from_csv
-        try:
-            model_path = str(settings.DISEASE_MODEL_PATH)
-            le_path    = str(settings.LABEL_ENCODER_PATH)
-            os.makedirs(os.path.dirname(model_path), exist_ok=True)
-
-            result = train_from_csv(
-                csv_path          = dataset.csv_file.path,
-                model_save_path   = model_path,
-                label_encoder_path= le_path,
-                dataset_record_id = dataset.id
-            )
-
-            if 'error' in result:
-                dataset.status       = 'failed'
-                dataset.training_log = result['error']
-            else:
-                dataset.status        = 'trained'
-                dataset.accuracy      = result['accuracy']
-                dataset.label_names   = result['label_names']
-                dataset.training_log  = result['log']
-                dataset.model_path    = model_path
-                dataset.trained_at    = timezone.now()
-
-        except Exception as e:
-            dataset.status       = 'failed'
-            dataset.training_log = f'Training failed: {str(e)}'
-
-        dataset.save()
-
-    thread = threading.Thread(target=train_thread, daemon=True)
-    thread.start()
-    
-    return ok(message='Auto dataset generated and training started!')
+    return ok(message='Dataset generated! Please run train_cnn.py to train the model.')
 
 
 # ═══════════════════════════════════════════════════════════
@@ -973,10 +923,16 @@ def api_fertilizer_calc(request):
     # Soil adjustment factors
     soil_adj = {'sandy':1.2, 'clay':0.9, 'loamy':1.0, 'black':0.85, 'red':1.1, 'silty':0.95}
     adj      = soil_adj.get(soil, 1.0)
+    
+    # Advanced: Existing Soil Test NPK (kg/acre)
+    soil_n = float(d.get('soil_n', 0))
+    soil_p = float(d.get('soil_p', 0))
+    soil_k = float(d.get('soil_k', 0))
 
-    n = round(npk['N'] * area * factor * adj, 1)
-    p = round(npk['P'] * area * factor * adj, 1)
-    k = round(npk['K'] * area * factor * adj, 1)
+    # Calculate required, subtracting existing soil nutrients
+    n = max(0, round(npk['N'] * area * factor * adj - soil_n, 1))
+    p = max(0, round(npk['P'] * area * factor * adj - soil_p, 1))
+    k = max(0, round(npk['K'] * area * factor * adj - soil_k, 1))
 
     urea = round(n / 0.46, 1)
     dap  = round(p / 0.18, 1)
@@ -993,6 +949,14 @@ def api_fertilizer_calc(request):
         f"Week 4: Top dress {round(n*0.3,1)}kg N (Urea: {round(urea*0.3,1)}kg). "
         f"Week 7: Final top dress {round(n*0.2,1)}kg N (Urea: {round(urea*0.2,1)}kg). "
         f"Apply in moist soil for best results."
+    )
+    
+    # Organic alternative calculation (Vermicompost has approx 1.5% N, 1% P, 1% K)
+    # We estimate based on Nitrogen requirement primarily
+    vermi_req = round(n / 0.015, 0)
+    organic_alt = (
+        f"To substitute chemical fertilizers, you can apply approx {vermi_req} kg of Vermicompost or FYM (Farm Yard Manure). "
+        f"Additionally, applying 5-10 kg of Neem Cake per acre helps control soil-borne pests and improves N-use efficiency."
     )
 
     log = FertilizerLog.objects.create(
@@ -1013,6 +977,7 @@ def api_fertilizer_calc(request):
         nitrogen=n, phosphorus=p, potassium=k,
         urea=urea, dap=dap, mop=mop,
         schedule=schedule, estimated_cost=cost,
+        organic=organic_alt,
         log_id=log.id
     )
 
@@ -1189,8 +1154,22 @@ def _generate_chat_response(message, context, image_file, user):
 
     if context == 'disease' or any(w in msg for w in ['disease','blight','rust','yellow','brown','spot','sick','infected','leaf']):
         if image_file:
-            return ('🔬 Image received! Running disease analysis... '
-                    'Please use the **Upload Image** button in the Disease Recognition section for a full AI diagnosis with confidence scores and treatment recommendations. 🌿')
+            from .ml.disease_engine import predict_disease
+            try:
+                # Read the file content for the engine
+                image_bytes = image_file.read()
+                result = predict_disease(image_bytes)
+                
+                disease = result['disease']
+                confidence = result['confidence']
+                treatment = result['treatment']
+                
+                return (f'🔬 I analyzed your image using our AI model! Here is what I found:\n\n'
+                        f'**Disease Detected:** {disease} ({confidence}% confidence)\n\n'
+                        f'**Recommended Treatment:**\n{treatment}\n\n'
+                        f'For more details, please visit the **Disease AI** section. 🌿')
+            except Exception as e:
+                return f'⚠️ I encountered an error while analyzing the image: {str(e)}. Please try again or use the main Disease AI page.'
         return ('🌿 To diagnose crop diseases:\n\n'
                 '1. Go to **Disease AI** section\n'
                 '2. Upload a clear photo of the affected plant\n'
@@ -1198,12 +1177,57 @@ def _generate_chat_response(message, context, image_file, user):
                 '4. Click **Analyze Disease**\n\n'
                 'I can identify 18+ diseases including Rust, Blight, Mosaic Virus, Blast, and more! 📸')
 
+    import re
+    import requests
+    from django.conf import settings
+    
+    city_match = re.search(r'weather\s+(?:in|of|for|at)\s+([a-zA-Z\s]+)', msg)
+    if city_match:
+        city = city_match.group(1).strip()
+        key = getattr(settings, 'OPENWEATHER_API_KEY', '')
+        base = getattr(settings, 'OPENWEATHER_BASE_URL', 'https://api.openweathermap.org/data/2.5')
+        
+        if 'your_openweathermap' in key.lower() or not key:
+            return f'🌤️ I see you want the weather in **{city.title()}**, but my live weather API key is not configured. Please set up the OPENWEATHER_API_KEY in settings.py!'
+            
+        try:
+            resp = requests.get(f'{base}/weather?q={city}&appid={key}&units=metric', timeout=5)
+            wd = resp.json()
+            if wd.get('cod') == 200:
+                temp = round(wd['main']['temp'])
+                desc = wd['weather'][0]['description'].title()
+                humidity = wd['main']['humidity']
+                return (f'🌤️ **Live Weather for {wd["name"]}**:\n\n'
+                        f'• **Temperature**: {temp}°C\n'
+                        f'• **Condition**: {desc}\n'
+                        f'• **Humidity**: {humidity}%\n\n'
+                        f'For a full 5-day forecast and farming advisories, please visit the **Weather Forecast** section! 🚿')
+            else:
+                return f'⚠️ I could not find the weather for "{city.title()}". Please check the spelling or try another city.'
+        except Exception as e:
+            return f'⚠️ Sorry, I could not fetch the weather right now: {str(e)}'
+
     if context == 'weather' or any(w in msg for w in ['weather','rain','temperature','forecast','humidity','wind']):
         return ('🌤️ For weather forecasts:\n\n'
                 '• Go to **Weather Forecast** section\n'
                 '• Enable GPS location or search your city\n'
                 '• Get 5-day forecast + farming advisories\n\n'
                 'I recommend irrigating before 8 AM during hot weather! 🚿')
+
+    if 'rice' in msg or 'paddy' in msg:
+        return '🌾 **Rice (Paddy)** is a Kharif crop. It is typically sown in June-July (onset of monsoon) and harvested in October-November. It requires high temperature and heavy rainfall.'
+    
+    if 'wheat' in msg:
+        return '🌾 **Wheat** is a Rabi crop. It is typically sown in October-December and harvested in February-April. It requires cool weather and moderate irrigation.'
+
+    if 'maize' in msg or 'corn' in msg:
+        return '🌽 **Maize (Corn)** is primarily a Kharif crop, sown in June-July and harvested in September-October, though it can also be grown in Rabi in some regions.'
+
+    if 'mustard' in msg:
+        return '🌼 **Mustard** is a Rabi crop. It is sown in October-November and harvested in February-March.'
+
+    if 'cotton' in msg:
+        return '🪴 **Cotton** is a Kharif crop. Sown in May-July and harvested in October-January. It requires clear sunshine during its growing period.'
 
     if context == 'crop' or any(w in msg for w in ['crop','sow','plant','harvest','kharif','rabi','zaid','season']):
         return ('🌾 Crop Planning Guide:\n\n'
@@ -1262,5 +1286,23 @@ def api_contact(request):
     if not all(d.get(k) for k in ('name','email','subject','message')):
         return err('All fields are required')
 
+    from django.core.mail import send_mail
+    from django.conf import settings
+
     ContactInquiry.objects.create(**{k: d[k] for k in ('name','email','subject','message')})
+    
+    # Try sending email notification to support email
+    try:
+        support_email = 'shivamshah3111@gmail.com'
+        full_message = f"Name: {d['name']}\nEmail: {d['email']}\n\nMessage:\n{d['message']}"
+        send_mail(
+            subject=f"[AgriAI Contact] {d['subject']}",
+            message=full_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[support_email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+        
     return ok(message='Message received! We\'ll respond within 24 hours. 🌿')

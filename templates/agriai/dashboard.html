@@ -51,7 +51,7 @@
     {% if model_trained %}
     <span class="model-badge animate-in" data-delay="4">🧠 ML Disease Model Active — Custom trained model loaded</span>
     {% else %}
-    <span class="model-badge untrained animate-in" data-delay="4">⚡ Rule-Based Mode — <a href="/disease/" class="link-inherit">Upload CSV to train ML model</a></span>
+    <span class="model-badge untrained animate-in" data-delay="4">⚡ Rule-Based Mode — No CNN model found</span>
     {% endif %}
   </div>
 
@@ -66,7 +66,7 @@
     <a href="/disease/" class="feature-card disease animate-in" data-delay="2">
       <div class="feat-icon">🔬</div>
       <h3>Disease AI</h3>
-      <p>Upload crop photos for instant AI diagnosis. Train your own model with CSV data</p>
+      <p>Upload crop photos for instant AI diagnosis using deep learning.</p>
       <div class="feat-arrow">→</div>
     </a>
     <a href="/pest-control/" class="feature-card pest animate-in" data-delay="3">

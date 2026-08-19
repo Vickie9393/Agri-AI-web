@@ -46,6 +46,19 @@
           <option value="fruiting">🍎 Fruiting / Grain Fill</option>
         </select>
       </div>
+
+      <!-- Advanced Mode -->
+      <div class="advanced-toggle" style="margin-bottom: 15px; cursor: pointer; color: #10b981; font-weight: 500;" onclick="document.getElementById('advancedOptions').style.display = document.getElementById('advancedOptions').style.display === 'none' ? 'block' : 'none'">
+        <i class="fa fa-sliders-h"></i> Advanced Mode (Soil Test Data)
+      </div>
+      <div id="advancedOptions" style="display: none; background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 10px;">Enter existing soil NPK levels (kg/acre) from your soil test report to optimize fertilizer usage.</p>
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group mb-0"><label>Soil N</label><input type="number" id="soilN" placeholder="0" min="0" step="0.1"></div>
+          <div class="form-group mb-0"><label>Soil P</label><input type="number" id="soilP" placeholder="0" min="0" step="0.1"></div>
+          <div class="form-group mb-0"><label>Soil K</label><input type="number" id="soilK" placeholder="0" min="0" step="0.1"></div>
+        </div>
+      </div>
       <button class="btn-primary full" onclick="calculateFertilizer()">Calculate Fertilizer 🧮</button>
       <div id="fertMsg" class="msg-box"></div>
       <div class="npk-legend">
@@ -75,6 +88,11 @@
         </div>
         <div class="cost-box"><i class="fa fa-rupee-sign"></i><div><strong>Estimated Cost</strong><span id="costVal">₹0</span></div></div>
         <div class="schedule-box"><h4>📅 Application Schedule</h4><p id="scheduleText"></p></div>
+
+        <div class="schedule-box mt-1" style="background: #ecfdf5; border: 1px solid #d1fae5;">
+          <h4>🌿 Organic Alternatives</h4>
+          <p id="organicText"></p>
+        </div>
       </div>
     </div>
   </div>

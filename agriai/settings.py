@@ -90,23 +90,23 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST      = 'smtp.gmail.com'
 EMAIL_PORT      = 587
 EMAIL_USE_TLS   = True
-EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER',     'your-email@gmail.com')   # ← SET THIS
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'your-app-password')      # ← SET THIS
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER',     'shivamshah3111@gmail.com')   # ← SET THIS
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'vvgtmqwriafacjhs')      # ← SET THIS
 DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
 
 # ─────────────────────────────────────────────────────────────────
 # 🔑 TWILIO SETTINGS (for OTP via SMS)
 # ─────────────────────────────────────────────────────────────────
 # HOW TO GET: Sign up at https://www.twilio.com → Console → Account Info
-TWILIO_ACCOUNT_SID  = os.environ.get('TWILIO_ACCOUNT_SID', 'ACba8a7eb38da1ca5cc9d5fe48e0690fe7')  # ← SET THIS
+TWILIO_ACCOUNT_SID  = os.environ.get('TWILIO_ACCOUNT_SID', 'AC204272b3c2e81bc40b09740bc4bd22c7')  # ← SET THIS
 TWILIO_AUTH_TOKEN   = os.environ.get('TWILIO_AUTH_TOKEN', '61accee02e88d598384f89da3e90f90e')       # ← SET THIS
-TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '+917607422176')                      # ← SET THIS
+TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '+17372212163')                      # ← SET THIS
 
 # ─────────────────────────────────────────────────────────────────
 # 🔑 GOOGLE OAUTH SETTINGS (for Google Sign-In)
 # ─────────────────────────────────────────────────────────────────
 # HOW TO GET: Google Cloud Console → APIs & Services → Credentials → OAuth Client ID
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') # ← SET THIS
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '567408831528-1qma1s9jeb6hhgaqfpqkag77p5prfj5a.apps.googleusercontent.com') # ← SET THIS
 
 # ─────────────────────────────────────────────────────────────────
 # 🔑 OPENWEATHERMAP API (for Weather Forecast)
@@ -155,8 +155,8 @@ CORS_ALLOW_ALL_ORIGINS = True   # ← Restrict to your domain in production
 # ─────────────────────────────────────────────────────────────────
 ML_MODELS_DIR   = BASE_DIR / 'media' / 'models'
 ML_DATASETS_DIR = BASE_DIR / 'media' / 'datasets'
-DISEASE_MODEL_PATH = ML_MODELS_DIR / 'disease_model.pkl'
-LABEL_ENCODER_PATH = ML_MODELS_DIR / 'label_encoder.pkl'
+DISEASE_MODEL_PATH = BASE_DIR / 'agriai_app' / 'ml' / 'cnn_disease_model.keras'
+LABEL_ENCODER_PATH = BASE_DIR / 'agriai_app' / 'ml' / 'cnn_classes.json'
 
 # ─────────────────────────────────────────────────────────────────
 # FILE UPLOAD

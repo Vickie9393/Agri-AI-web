@@ -1,0 +1,21 @@
+# Environment
+venv/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Django
+*.sqlite3
+media/
+static_root/
+
+# Machine Learning
+*.keras
+*.h5
+*.onnx
+
+# IDEs
+.vscode/
+.idea/
