@@ -20,6 +20,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']   # ← Restrict to your domain in production
+CSRF_TRUSTED_ORIGINS = ['https://agri-ai-web.onrender.com', 'https://*.onrender.com']
 
 # ─────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
