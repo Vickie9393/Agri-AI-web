@@ -90,40 +90,36 @@ def get_csrf(request):
 
 # ─── Email OTP Sender ────────────────────────────────────────
 def send_otp_email(email, otp_code, purpose):
-    """Sends OTP email over HTTPS using Resend API (bypasses Render SMTP block)."""
+    """Sends OTP email using Django's configured SMTP (Gmail)."""
     try:
-        response = requests.post(
-            'https://api.resend.com/emails',
-            headers={
-                'Authorization': f'Bearer {settings.RESEND_API_KEY}',
-                'Content-Type': 'application/json',
-            },
-            json={
-                'from': 'AgriAI <onboarding@resend.dev>',
-                'to': [email],
-                'subject': f'AgriAI OTP — {purpose.title()} Verification',
-                'html': f'''
-                    <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                        <h2 style="color: #2e7d32;">AgriAI Verification Code 🌿</h2>
-                        <p>Dear User,</p>
-                        <p>Your One-Time Password (OTP) for <strong>{purpose}</strong> is:</p>
-                        <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #1b5e20; background: #e8f5e9; padding: 12px; text-align: center; border-radius: 6px; margin: 15px 0;">
-                            {otp_code}
-                        </div>
-                        <p style="color: #666; font-size: 13px;">This code is valid for {settings.OTP_EXPIRY_MINUTES} minutes. Do not share it with anyone.</p>
-                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                        <p style="color: #999; font-size: 12px;">— AgriAI Team</p>
-                    </div>
-                '''
-            },
-            timeout=10
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        html_content = f'''
+            <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #2e7d32;">AgriAI Verification Code 🌿</h2>
+                <p>Dear User,</p>
+                <p>Your One-Time Password (OTP) for <strong>{purpose}</strong> is:</p>
+                <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #1b5e20; background: #e8f5e9; padding: 12px; text-align: center; border-radius: 6px; margin: 15px 0;">
+                    {otp_code}
+                </div>
+                <p style="color: #666; font-size: 13px;">This code is valid for {settings.OTP_EXPIRY_MINUTES} minutes. Do not share it with anyone.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="color: #999; font-size: 12px;">— AgriAI Team</p>
+            </div>
+        '''
+        
+        send_mail(
+            subject=f'AgriAI OTP — {purpose.title()} Verification',
+            message=f'Your OTP is {otp_code}.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            html_message=html_content,
+            fail_silently=False,
         )
-        if response.status_code in [200, 201]:
-            return True, None
-        else:
-            return False, response.text
+        return True, None
     except Exception as e:
-        print(f"Error sending email via Resend API: {e}")
+        print(f"Error sending email via SMTP: {e}")
         return False, str(e)
 
 
@@ -941,9 +937,9 @@ def api_fertilizer_calc(request):
     adj      = soil_adj.get(soil, 1.0)
     
     # Advanced: Existing Soil Test NPK (kg/acre)
-    soil_n = float(d.get('soil_n', 0))
-    soil_p = float(d.get('soil_p', 0))
-    soil_k = float(d.get('soil_k', 0))
+    soil_n = float(d.get('soil_n') or 0)
+    soil_p = float(d.get('soil_p') or 0)
+    soil_k = float(d.get('soil_k') or 0)
 
     # Calculate required, subtracting existing soil nutrients
     n = max(0, round(npk['N'] * area * factor * adj - soil_n, 1))
@@ -1307,18 +1303,21 @@ def api_contact(request):
 
     ContactInquiry.objects.create(**{k: d[k] for k in ('name','email','subject','message')})
     
-    # Try sending email notification to support email
-    try:
-        support_email = 'shivamshah3111@gmail.com'
-        full_message = f"Name: {d['name']}\nEmail: {d['email']}\n\nMessage:\n{d['message']}"
-        send_mail(
-            subject=f"[AgriAI Contact] {d['subject']}",
-            message=full_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[support_email],
-            fail_silently=True,
-        )
-    except Exception:
-        pass
+    # Try sending email notification to support email in a background thread
+    def send_support_email():
+        try:
+            support_email = 'shivamshah3111@gmail.com'
+            full_message = f"Name: {d['name']}\nEmail: {d['email']}\n\nMessage:\n{d['message']}"
+            send_mail(
+                subject=f"[AgriAI Contact] {d['subject']}",
+                message=full_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[support_email],
+                fail_silently=False,
+            )
+        except Exception:
+            pass
+
+    threading.Thread(target=send_support_email).start()
         
     return ok(message='Message received! We\'ll respond within 24 hours. 🌿')

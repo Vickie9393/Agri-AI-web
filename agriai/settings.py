@@ -161,3 +161,14 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50 MB
 # Auth redirects
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
+
+# ─────────────────────────────────────────────────────────────────
+# EMAIL SMTP CONFIGURATION (Gmail)
+# ─────────────────────────────────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'shivamshah3111@gmail.com'
+EMAIL_HOST_PASSWORD = 'vvgt mqwr iafa cjhs'
+DEFAULT_FROM_EMAIL = 'AgriAI <shivamshah3111@gmail.com>'
